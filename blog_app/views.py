@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Count,Q
 from . import models
+from django.contrib.auth.models import User
 import json
 from django.core.serializers import serialize
 from django.utils import timezone
@@ -124,3 +125,30 @@ def edit_blog(request,id=None):
     except Exception as e:
         print("Error deleting blog", e)
         return JsonResponse({"message":f"{e}"})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def my_recent_liked_blogs(request):
+    user = request.user
+    my_recent_liked_blogs = models.Blog.objects.filter(
+        response__user=user, response__like=True
+    ).order_by("-response__response_date")[:5]
+    my_comment_history = models.Comment.objects.filter(user=user)
+    import pdb
+    pdb.set_trace()
+    author_id = request.GET.get("author_id")
+    if author_id:
+        author = get_object_or_404(User, id=author_id)
+        my_comment_history_for_author = models.Comment.objects.filter(
+            user=user, blog__author=author
+        )
+
+    context = {
+        "my_recent_liked_blogs": json.loads(serialize("json",my_recent_liked_blogs)),
+        "my_comment_history": json.loads(serialize("json",my_comment_history)),
+        "my_comment_history_for_author": json.loads(serialize("json",my_comment_history_for_author)),
+    }
+
+    return JsonResponse(context, safe=False)
+
