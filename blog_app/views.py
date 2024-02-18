@@ -174,9 +174,7 @@ def my_recent_liked_blogs(request):
         response__user=user, response__like=True
     ).order_by("-response__response_date")[:5]
     my_comment_history = models.Comment.objects.filter(user=user)
-    import pdb
 
-    pdb.set_trace()
     author_id = request.GET.get("author_id")
     if author_id:
         author = get_object_or_404(User, id=author_id)
