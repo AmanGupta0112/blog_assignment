@@ -1,13 +1,16 @@
 from django.shortcuts import  get_object_or_404
 from django.http import JsonResponse
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from django.db.models import Count,Q
 from . import models
-from django.views.decorators.csrf import csrf_exempt
 import json
 from django.core.serializers import serialize
 from django.utils import timezone
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def user_blog(request):
     if request.user.is_authenticated:
         blogs = models.Blog.objects.filter(author_id=request.user.id).annotate(
@@ -52,7 +55,8 @@ def user_blog(request):
     return JsonResponse(None,safe=False)
 
 
-@csrf_exempt
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def create_blog(request):
     if request.method == "POST":
         request_body = json.loads(request.body.decode("utf-8"))
@@ -62,18 +66,19 @@ def create_blog(request):
         new_blog = models.Blog.objects.create(
             name=name,
             content=content,
-            author_id= 1,
+            author_id=request.user.id,
         )
         return JsonResponse(json.loads(serialize("json", [new_blog])), safe=False)
 
 
-@csrf_exempt
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def delete_blog(request):
     if request.method == "POST":
         try:
             blog_id = json.loads(request.body.decode("utf-8")).get("id")
             blog = get_object_or_404(models.Blog, id=blog_id)
-            if 1 == blog.author.id:
+            if request.user.id == blog.author.id:
                 blog.delete()
                 return JsonResponse({"message": "Blog deleted successfully!!"})
             else:
@@ -83,7 +88,8 @@ def delete_blog(request):
             return JsonResponse({"message": "Something went wrong!!"})
 
 
-@csrf_exempt
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def see_blog(request,id=None):
     try:
         blog = get_object_or_404(models.Blog, id=id)
@@ -93,13 +99,14 @@ def see_blog(request,id=None):
         return JsonResponse({"message":f"Blog didn't found with id : {id}!! Try again with correct id!!!"})
 
 
-@csrf_exempt
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def edit_blog(request,id=None):
     try:
         if request.method == "POST":
             request_body = json.loads(request.body.decode("utf-8"))
             blog_to_update = get_object_or_404(models.Blog, id=id)
-            if 2 == blog_to_update.author.id:
+            if request.user.id == blog_to_update.author.id:
                 blog_to_update.name = (
                     request_body.get('name', " ")
                     if request_body.get('name'," ") != " "
