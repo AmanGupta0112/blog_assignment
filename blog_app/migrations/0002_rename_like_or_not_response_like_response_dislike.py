@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('blog_app', '0001_initial'),
+        ("blog_app", "0001_initial"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='response',
-            old_name='like_or_not',
-            new_name='like',
+            model_name="response",
+            old_name="like_or_not",
+            new_name="like",
         ),
         migrations.AddField(
-            model_name='response',
-            name='dislike',
+            model_name="response",
+            name="dislike",
             field=models.BooleanField(default=True),
             preserve_default=False,
         ),
